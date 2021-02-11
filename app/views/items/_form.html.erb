@@ -26,15 +26,18 @@
       <%= form.label :images %>
       <%= form.file_field :images, multiple: true, class: "file-input" %>
     </div>
-
-    <div id="image_preview">
-    
-      <% if item.images.attached? %>
-        <% item.images.each do |image| %>
+    <% if item.images.attached? %>
+      <% item.images.each do |image| %>
+        <div class="image-box">
           <%= image_tag image.variant(resize: "150x150") %>
-        <% end %>
+          <p> <%= image.filename %> </p>
+          <%= form.hidden_field :images , name: "item[images][]", value: "#{image.blob.id}", style: "display: none;", class: "item-images-input" %>
+          <%= link_to "Edit", "", class: "btn-edit" %>
+          <%= file_field "edit-image","" , class: "edit-image-file-input file-input", style: "display: none;"%>
+          <%= link_to "Delete", "", class: "btn-delete" %>
+        </div>
       <% end %>
-    </div>
+    <% end %>
   </div>
 
   <div class="actions">
@@ -45,28 +48,64 @@
 <p>テスト</p>
 
 <script type="text/javascript">
-$(document).on('turbolinks:load', function() {
-
-  $('#item_images').on('change',function(e){
+ $('#item_images').on('change',function(e){
     var files = e.target.files;
     var d = (new $.Deferred()).resolve();
     $.each(files,function(i,file){
-      d = d.then(function(){return previewImage(file)});
+      d = d.then(function() {
+          return Uploader.upload(file)})
+        .then(function(data){
+          return previewImage(file, data.image_id);
+      });
     });
-  })
+    $('#item_images').val('');
+  });
 
-  var previewImage = function (imageFile) {
+
+  var previewImage = function(imageFile, image_id){
     var reader = new FileReader();
     var img = new Image();
-    var def = $.Deferred();
-    reader.onload = function (e) {
-      // 画像を表示
-      $("#image_preview").append(img);
+    var def =$.Deferred();
+    reader.onload = function(e){
+      var image_box = $('<div>',{class: 'image-box'});
+      image_box.append(img);
+      image_box.append($('<p>').html(imageFile.name));
+      image_box.append($('<input>').attr({
+            name: "item[images][]",
+            value: image_id,
+            style: "display: none;",
+            type: "hidden",
+            class: "item-images-input"}));
+      image_box.append('<a href="" class= "btn-edit">Edit</a>');
+      image_box.append($('<input>').attr({
+            name: "edit-image[]",
+            style: "display: none;",
+            type: "file",
+            class: "edit-image-file-input file-input"}));
+      image_box.append('<a href="" class="btn-delete">Delete</a>');
+      $('.images-field').append(image_box);
       img.src = e.target.result;
-      def.resolve(img);
+      def.resolve();
     };
     reader.readAsDataURL(imageFile);
     return def.promise();
-  };
-})
+  }
+
+  var Uploader = {
+    upload: function(imageFile){
+      var def =$.Deferred();
+      var formData = new FormData();
+      formData.append('image', imageFile);
+      $.ajax({
+        type: "POST",
+        url: '/items/upload_image',
+        data: formData,
+        dataType: 'json',
+        processData: false,
+        contentType: false,
+        success: def.resolve
+      })
+      return def.promise();
+    }
+  }
 </script>
