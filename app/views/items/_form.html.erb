@@ -55,18 +55,18 @@ $(document).on('turbolinks:load', function() {
     });
   })
 
-  var previewImage = function(imageFile){
-   var reader = new FileReader();
+  var previewImage = function (imageFile) {
+    var reader = new FileReader();
     var img = new Image();
     var def = $.Deferred();
     reader.onload = function (e) {
       // 画像を表示
-      $('.images_field').append(img);
+      $("#image_preview").append(img);
       img.src = e.target.result;
       def.resolve(img);
     };
     reader.readAsDataURL(imageFile);
     return def.promise();
-  }
+  };
 })
 </script>
