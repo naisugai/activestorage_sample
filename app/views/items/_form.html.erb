@@ -21,12 +21,52 @@
     <%= form.text_area :description %>
   </div>
 
-    <div class="field">
-    <%= form.label :images %>
-    <%= form.file_field :images ,multiple: true%>
+  <div class="images-field clearfix">
+    <div  class="field">
+      <%= form.label :images %>
+      <%= form.file_field :images, multiple: true, class: "file-input" %>
+    </div>
+
+    <div id="image_preview">
+    
+      <% if item.images.attached? %>
+        <% item.images.each do |image| %>
+          <%= image_tag image.variant(resize: "150x150") %>
+        <% end %>
+      <% end %>
+    </div>
   </div>
 
   <div class="actions">
     <%= form.submit %>
   </div>
 <% end %>
+
+<p>テスト</p>
+
+<script type="text/javascript">
+$(document).on('turbolinks:load', function() {
+
+  $('#item_images').on('change',function(e){
+    var files = e.target.files;
+    var d = (new $.Deferred()).resolve();
+    $.each(files,function(i,file){
+      d = d.then(function(){return previewImage(file)});
+    });
+  })
+
+  var previewImage = function(imageFile){
+   var reader = new FileReader();
+    var img = new Image();
+    var def = $.Deferred();
+    reader.onload = function (e) {
+      // 画像を表示
+      $('.images_field').append(img);
+      img.src = e.target.result;
+      def.resolve(img);
+    };
+    reader.readAsDataURL(imageFile);
+    return def.promise();
+  }
+})
+</script>
